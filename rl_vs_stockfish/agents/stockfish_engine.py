@@ -14,7 +14,7 @@ class StockFishEngine:
         )
 
     def move(self, board):
-        result = self.engine.play(board, chess.engine.Limit(time=0.01))
+        result = self.engine.play(board, chess.engine.Limit(time=0.0001))
         return result.move
 
     def quit(self):

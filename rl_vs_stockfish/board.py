@@ -1,19 +1,24 @@
 import numpy as np
 import chess
-chess_dict = {
-    'p': [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    'P': [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-    'n': [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    'N': [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-    'b': [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    'B': [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-    'r': [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    'R': [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-    'q': [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-    'Q': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-    'k': [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-    'K': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    '.': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+
+pieces_one_hot_encoding = {
+    'P_l': [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    'P_r': [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    'p':   [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    'N_l': [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    'N_r': [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    'n':   [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    'B_l': [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    'B_r': [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    'b':   [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    'R_l': [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+    'R_r': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    'r':   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+    'q':   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    'Q':   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+    'k':   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+    'K':   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    '.':   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 }
 
 
@@ -21,28 +26,34 @@ num2move = {}
 move2num = {}
 
 counter = 0
-for from_sq in range(64):
-    for to_sq in range(64):
-        num2move[counter] = chess.Move(from_sq, to_sq)
-        move2num[chess.Move(from_sq, to_sq)] = counter
+for from_square in range(64):
+    for to_square in range(64):
+        num2move[counter] = chess.Move(from_square, to_square)
+        move2num[chess.Move(from_square, to_square)] = counter
         counter += 1
 
 
 def translate_board(board):
     pgn = board.epd()
-    foo = []
+    tensor_board = []
     pieces = pgn.split(" ", 1)[0]
     rows = pieces.split("/")
     for row in rows:
-        foo2 = []
-        for thing in row:
+        row_tensor = []
+        for index, thing in enumerate(row):
             if thing.isdigit():
                 for i in range(0, int(thing)):
-                    foo2.append(chess_dict['.'])
+                    row_tensor.append(pieces_one_hot_encoding['.'])
             else:
-                foo2.append(chess_dict[thing])
-        foo.append(foo2)
-    return np.array(foo)
+                if thing not in ["P", "N", "R", "B"]:
+                    row_tensor.append(pieces_one_hot_encoding[thing])
+                else:
+                    if(index < 4):
+                        row_tensor.append(pieces_one_hot_encoding[thing+"_l"])
+                    else:
+                        row_tensor.append(pieces_one_hot_encoding[thing+"_r"])
+        tensor_board.append(row_tensor)
+    return np.array(tensor_board)
 
 
 def filter_legal_moves(board, logits):
@@ -55,3 +66,16 @@ def filter_legal_moves(board, logits):
         filter_mask[idx] = 1
     new_logits = logits*filter_mask
     return new_logits
+
+
+def check_legal_move(board, move):
+    legal_moves = board.legal_moves
+    legal = False
+    for legal_move in legal_moves:
+        from_square = legal_move.from_square
+        to_square = legal_move.to_square
+        if from_square == move.from_square and to_square == move.to_square:
+            legal = True
+            break
+
+    return legal
